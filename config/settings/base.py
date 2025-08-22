@@ -38,7 +38,6 @@ THIRD_PARTY_APPS = [
     'cloudinary',
     'social_django',
     'django_celery_beat',
-    'django_celery_email',
 ]
 
 LOCAL_APPS = [
