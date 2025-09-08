@@ -6,8 +6,11 @@ services:
         volumes:
             - .:/app:z
             - ./staticfiles:/app/staticfiles
-        ports:
-            - "8000:8000"
+        # ports:
+        #     - "8000:8000"
+
+        expose:
+            - "8000"
         env_file:
             - ./.envs/.env.local
         depends_on:
@@ -45,6 +48,21 @@ services:
             MP_SMTP_AUTH_ALLOW_INSECURE: 1
         networks:
             - school_local_nw
+
+    nginx:
+        build:
+            context: ./docker/local/nginx
+            dockerfile: Dockerfile
+        restart: always
+        ports:
+            - "8080:80"
+        volumes:
+            - ./staticfiles:/app/staticfiles
+            - logs_store:/var/log/nginx
+        depends_on:
+            - api
+        networks:
+            - school_local_nw
     
 
 networks:
@@ -54,6 +72,7 @@ networks:
 volumes:
     school_local_db:
     school_mailpit_db:
+    logs_store:
     
         
             
