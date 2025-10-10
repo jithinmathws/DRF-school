@@ -15,6 +15,8 @@ from rest_framework.request import Request
 
 from core_apps.common.models import ContentView
 from core_apps.common.permissions import *
+from core_apps.student import utils as StudentUtils
+from core_apps.student import models as StudentModel
 from core_apps.common.renderers import GenericJSONRenderer
 from .models import Profile
 from .serializers import ProfileListSerializer, ProfileSerializer
@@ -91,9 +93,43 @@ class ProfileDetailAPIView(generics.RetrieveUpdateAPIView):
 
         try:
             serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-            
+            with transaction.atomic():
+                updated_instance = serializer.save()
+
+                # create a student when explicitly requested with child payload
+                create_student = bool(request.data.get("create_student", False))
+                student_payload = request.data.get("student", {}) or {}
+
+                if create_student:
+                    # Let utils apply sensible defaults for missing child fields
+                    first_name = student_payload.get("first_name")
+                    last_name = student_payload.get("last_name")
+                    gender = student_payload.get("gender")
+
+                    student_account = StudentUtils.create_student_account(
+                        user=updated_instance.user,
+                        first_name=first_name,
+                        last_name=last_name,
+                        gender=gender,
+                    )
+                    # After creation, mark all students for this parent as having siblings (only if > 1)
+                    qs = StudentModel.Student.objects.filter(parent=updated_instance.user)
+                    if qs.count() > 1:
+                        qs.update(has_sibling=True)
+                    message = (
+                        "Profile updated and new student created successfully. "
+                        "An email has been sent to your account."
+                    )
+                else:
+                    message = "Profile updated successfully."
+                return Response(
+                    {
+                        "message": message,
+                        "data": serializer.data,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
         except serializers.ValidationError as e:
             return Response({"errors": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:

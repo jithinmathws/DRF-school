@@ -1,0 +1,24 @@
+{% extends "emails/base.html" %}
+
+{% block title %}
+	Student Created
+{% endblock %}
+
+{% block content %}
+    <h2>Welcome to {{ site_name }}</h2>
+    <p>Dear {{ user.full_name }},</p>
+    <p>We're excited to inform you that your new student account has been created successfully.</p>
+    <p>Here are your account details:</p>
+    <ul>
+        <li><strong>Admission Number:</strong> {{ student.admission_number }}</li>
+        <li><strong>Gender:</strong> {{ student.get_gender_display }}</li>
+        <li><strong>First Name:</strong> {{ student.first_name }}</li>
+        <li><strong>Last Name:</strong> {{ student.last_name }}</li>
+
+    </ul>
+
+    <p><strong>Important:</strong>Thank you for joining {{ site_name }}. </p>
+    <p>If you have any questions, please don't hesitate to contact our customer support</p>
+    <p>Thank your for choosing <strong>{{ site_name }}</strong></p>
+    <p>Best regards,<br>The {{ site_name }} Team</p>
+{% endblock %}
